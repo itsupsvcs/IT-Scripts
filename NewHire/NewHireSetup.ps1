@@ -435,26 +435,26 @@ $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 	Set-QADUser $Username -objectattributes @{c=$strCountry} | out-null
     Write-host ""
 
-	If ($Distros -eq "")
-	   {Write-host "The manager did not provide a user to mirror groups off of, you will have to add them to the appropriate security groups manually."}
-	Else   
-	{
-	$K = Get-QADUser $Distros | select memberof 
-	foreach($user in $K.memberof) {
-		try{
-               # DO NOT COPY AWS PRIVS TO NEW USERS
-               if ($user -like "*AWS*")  {
-               Write-Host $user 
-               Write-Host -ForegroundColor Red "This will not be mirrored. Check in with managers for AWS access."
-               }
-
-               Else{
-            Add-QADGroupMember -Identity $user -Member $Username | out-null
-            }
-            }
-		catch{}	
+	If($Distros -eq "") {
+        Write-host "The manager did not provide a user to mirror groups off of, you will have to add them to the appropriate security groups manually."
+    }
+	Else {
+	    $K = Get-QADUser $Distros | select memberof 
+	        foreach($user in $K.memberof) {
+		        try{
+                    # DO NOT COPY AWS PRIVS TO NEW USERS
+                    if ($user -like "*AWS*")  {
+                        Write-Host $user 
+                        Write-Host -ForegroundColor Red "This will not be mirrored. Check in with managers for AWS access."
+                        }
+                    Else{
+                        Add-QADGroupMember -Identity $user -Member $Username | out-null
+                        }
+                    }
+		        catch{}	
         
-	}
+	        }
+        }
 	Get-QADUser $UserName -includedproperties ipphone | out-default | fl displayname, title, department, manager, ipphone, email 
 	
 	# Disconnect QADService.
