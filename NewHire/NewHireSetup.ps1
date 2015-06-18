@@ -415,7 +415,7 @@ Write-Host ""
 Write-Host -Foreground Gray "If all of the above information is correct, press any key to continue. If you do not wish to continue, please press Cntrl-C:"
 $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
-	#$Password = ConvertTo-SecureString $PlainPassword -AsPlainText -Force
+	# $Password = ConvertTo-SecureString $PlainPassword -AsPlainText -Force
 
 	
 	# Set Quest Active Directory stuff to use a DC in the local site.
@@ -433,17 +433,27 @@ $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 	Set-QADUser $Username -office $strOffice -department $strDepartment -StreetAddress $StrAddress -city $strCity -StateOrProvince $strState -PostalCode $strPostalCode -description $strTitle -Company $cfgCompany -title $strTitle -PhoneNumber $strTel | out-null
 	Set-QADUser $Username -objectattributes @{ipPhone=$Extension} | out-null
 	Set-QADUser $Username -objectattributes @{c=$strCountry} | out-null
-Write-host ""
+    Write-host ""
+
 	If ($Distros -eq "")
 	   {Write-host "The manager did not provide a user to mirror groups off of, you will have to add them to the appropriate security groups manually."}
 	Else   
 	{
 	$K = Get-QADUser $Distros | select memberof 
-	foreach($user in $K.memberof) 
-		{
-		try{Add-QADGroupMember -Identity $user -Member $Username | out-null}
-		catch{}
-		}
+	foreach($user in $K.memberof) {
+		try{
+               # DO NOT COPY AWS PRIVS TO NEW USERS
+               if ($user -like "*AWS*")  {
+               Write-Host $user 
+               Write-Host -ForegroundColor Red "This will not be mirrored. Check in with managers for AWS access."
+               }
+
+               Else{
+            Add-QADGroupMember -Identity $user -Member $Username | out-null
+            }
+            }
+		catch{}	
+        
 	}
 	Get-QADUser $UserName -includedproperties ipphone | out-default | fl displayname, title, department, manager, ipphone, email 
 	
