@@ -9,10 +9,6 @@ Add-PSSnapin Quest.ActiveRoles.ADManagement | out-null
 
 <# Storing Creds here for service accounts... for now#>
 
-<#Slack Admin Creds#>
-$slackUser = "It-Support@tradingtechnologies.com"
-$slackPass = "S1ackSupp0rt"
-
 <#Join.Me Admin Creds#>
 $joinmeUser = "joinmeadmin@tradingtechnologies.com"
 $joinmePass = "VZQk8m7xah"
@@ -343,27 +339,6 @@ Write-Host -Foreground Gray "   -Transfer ownership of their documents."
 Write-Host ""
 Write-Host -Foreground Gray "When finished, press any key in this window to continue."
 $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-
-<# Slack #>
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.navigate("https://tradingtechnologies.slack.com/admin")
-$ie.Visible = $true
-$ie.height = 1000
-while($ie.busy){Start-Sleep 1} 	
-$ie.Document.getElementById("email").value=$SlackUser
-$ie.Document.getElementById("password").value=$slackPass
-$ie.Document.getElementById("signin_btn").Click()
-Write-Host ""
-Write-Host ""
-Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Gray "Use the IE window that was launched to do the Following:"
-Write-Host ""
-Write-Host -Foreground Gray "-Disable the user's Slack Account."
-Write-Host ""
-Write-Host -Foreground Gray "When finished, press any key in this window to continue."
-$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-
 
 <# Join.Me #>
 $ie = new-object -com "InternetExplorer.Application"
