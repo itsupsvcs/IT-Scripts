@@ -24,14 +24,14 @@ $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 # Convert the New Hire Spreadsheet to a CSV
 #=============================================================================
 $xlCSV=6
-$CSVfilename1 = "$home\NewHire\user.csv"
+$CSVfilename1 = "C:\NewHire\user.csv"
 
 
 
 $Excel = New-Object -comobject Excel.Application  
 $Excel.Visible = $False 
 $Excel.displayalerts=$False
-$Excelfilename = "$home\NewHire\newhire.xlsx"
+$Excelfilename = "C:\NewHire\newhire.xlsx"
 
 
 $Workbook = $Excel.Workbooks.Open($Excelfilename)
@@ -40,12 +40,12 @@ $Worksheet.SaveAs($CSVfilename1,$xlCSV)
 $Excel.Quit()  
 
 If(ps excel){kill -name excel}
-(Get-Content $home\NewHire\user.csv) | % {$_ -replace '"', ""} | out-file -FilePath $home\NewHire\user.csv -Force -Encoding ascii
+(Get-Content C:\NewHire\user.csv) | % {$_ -replace '"', ""} | out-file -FilePath C:\NewHire\user.csv -Force -Encoding ascii
 
 #=============================================================================
 # Opening user detail list"
 #=============================================================================
-$UserInformation = Import-Csv user.csv
+$UserInformation = Import-Csv C:\NewHire\user.csv
 $cfgTab = [char]9
 $cfgCompany = "Trading Technologies";
 $cfgMailDomain = "@tradingtechnologies.com"; #E-Mail Domain
@@ -250,7 +250,7 @@ $cfgSaoPaulo = @{
   "State" = " "
   "PostalCode" = "04538"+"-"+"905"
   "Country" = "BR";
-  "AreaCode" = "+551134437212";
+  "AreaCode" = "551134437212";
   "OU" = "OU=USERS,OU=SAO,OU=South America,DC=int,DC=tt,DC=local";
   "DispNamLoc" = "(TT-SAO)";
   "ExtRange" = 1000..1199;
