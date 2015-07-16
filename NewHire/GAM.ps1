@@ -1,4 +1,4 @@
-$UserInformation = Import-Csv user.csv
+$UserInformation = Import-Csv C:\Newhire\user.csv
 Foreach ($User in $UserInformation)
 {
 	$FirstName = $User.FirstName
