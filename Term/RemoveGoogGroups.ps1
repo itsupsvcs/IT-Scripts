@@ -1,73 +1,52 @@
-$Gmail = $args[0]
-
-Write-Host ""
-Write-Host ""
-Write-Host ""
-Write-Host ""	
-	$answer=Read-Host "Do you wish to use a standard OOO reply (1),set a custom OOO reply (2), or do not set any OOO reply (3)?"
-	if ($answer -eq 1)
-	{
-	$oooreply=“This person is no longer an employee of Trading Technologies. For all TT related inquiries please contact us at +1(312)476-1000.”
-	}
-	elseif ($answer -eq 2)
-	{
-	$oooreply=Read-Host "Please type the custom OOO message and then press enter"
-	}
-	
-Write-Host ""
-Write-Host ""
-Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Gray "-----------------"
-Write-Host -Foreground Cyan "OOO reply set to:" $oooreply
-Write-Host -Foreground Gray "-----------------"	
-	
-	
-	#Set status of a users AutoReply and make sure it is set
-if ($answer -eq 3)
-	{
-	write-host "No OOO reply will be set for this user"
-	}
-else
-	{
-c:\gam\gam.exe user $Gmail vacation on subject "This email is no longer valid" message $oooreply enddate 2154-1-18
-	}
+$Gmail = $args
 
 
-    #Remove user from all Google Groups
-
-Write-Host "Removing $Dispname from all Google Groups" -ForegroundColor Red
-$purge_usr = $Gmail
-$purge= c:\gam\gam.exe info user $purge_usr
-$purge_chunk= $purge | Select-String "Groups:" -context 0,100
-$purge_grps=$purge_chunk.tostring().split(")")
-foreach ($line in $purge_grps)
+Function removeGoogleGroups($Gmail)
 {
-$grpaddresspurge=$line.tostring().split("<")[-1].Trim(">")
-    if ($grpaddresspurge.contains("(direct member")) 
-    {  
-    $purgegrp=$grpaddresspurge.replace("> (direct member","") 
-    
-    c:\gam\gam.exe update group $purgegrp remove owner $purge_usr
-    c:\gam\gam.exe update group $purgegrp remove member $purge_usr
+    Write-Host "Removing $Gmail from all Google Groups" -ForegroundColor Green
+
+    #GAM call to get User information, create substring by finding lines after 'Groups:'
+    $purge_usr = $Gmail
+    $purge_chunk= c:\gam\gam.exe info user $purge_usr
+
+    #If you want to see this information do a Write-Host $purge_chunk
+    $purge_chunk= $purge_chunk | Select-String "Groups:" -context 0,100
+
+    #Remove 'Groups: ' from string
+    $purge_chunk=$purge_chunk.ToString().Substring(9)
+
+    #Find length of string to determine if this is groupless
+    $length = $purge_chunk.Length
+
+    if($length.Equals(0))
+    {
+        Write-Host "This user is not a member of any groups. Skipping process" -ForegroundColor Green
+        return 
+    }
+
+    #Meat and Potatoes -- Separate emails from group names by replacing "<" ">" with 
+    #return/new line statements
+
+    #Example output from GAM
+    #Groups:
+    #2sv <2sv@acme.org>
+    #users <users@acme.org>
+   
+    $array = $purge_chunk.replace(">","`r`n").replace("<","`r`n").ToString().Split("`r`n")
+
+    #Splitting creates an array of string objects, parse through each email for removal
+
+    foreach ($line in $array)
+    {
+        if ($line.contains("@")) 
+        {  
+            Write-Host "$line" -ForegroundColor Yellow
+            c:\gam\gam.exe update group $line remove member $purge_usr
+        }
+
     }
 }
 
-$purge_usr = $Gmail
-$purge= c:\gam\gam.exe info user $purge_usr
-$purge_chunk= $purge | Select-String "Groups:" -context 0,100
-$purge_grps=$purge_chunk.tostring().split(")")
-foreach ($line in $purge_grps)
-{
-$grpaddresspurge=$line.tostring().split("<")[-1].Trim(">")
-    if ($grpaddresspurge.contains("(direct member")) 
-    {  
-    $purgegrp=$grpaddresspurge.replace("> (direct member","") 
-    
-    c:\gam\gam.exe update group $purgegrp remove owner $purge_usr
-    c:\gam\gam.exe update group $purgegrp remove member $purge_usr
-    }
-}
-Write-Host ""
-Write-Host "User Removed from all Google Groups"
-Write-Host ""
+
+#If you want to run this for a single user just uncomment below
+#removeGoogleGroups($Gmail)

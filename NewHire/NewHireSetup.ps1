@@ -1,3 +1,4 @@
+import-module ActiveDirectory
 #
 # Create user accounts in AD and Google
 # This script will read a CSV file and create user accounts based on that information.
@@ -13,7 +14,13 @@
 
 [System.Diagnostics.Process]::Start("C:\Program Files (x86)\Avaya\Site Administration\bin\ASA.exe") | out-null
 
-Write-Host ""
+Write-Host -ForegroundColor Green " _______                    ___ ___ .__                
+ \      \   ______  _  __  /   |   \|__|______   ____  
+ /   |   \_/ __ \ \/ \/ / /    ~    \  \_  __ \_/ __ \ 
+/    |    \  ___/\     /  \    Y    /  ||  | \/\  ___/ 
+\____|__  /\___  >\/\_/    \___|_  /|__||__|    \___  >
+        \/     \/                \/                 \/ 
+                                                       "                                                                                                          
 Write-Host ""
 Write-Host ""
 Write-Host ""	
@@ -350,8 +357,9 @@ $cfgOffices = @{
 	{$userOU = "OU=Accounting,"}
 	elseif ($strDepartment -eq "Administration")
 	{$userOU = "OU=Administration,"}
-	elseif ($strDepartment -eq "Development")
-	{$userOU = "OU=Development,"}
+	elseif ($strDepartment -eq "Engineering")
+	{$userOU = "OU=Development,"
+    Write-Host "YES ENGINEERING"}
 	elseif ($strDepartment -eq "Executives")
 	{$userOU = "OU=Executives,"}
 	elseif ($strDepartment -eq "Human Resources")
@@ -413,7 +421,9 @@ Write-Host ""
 Write-Host ""
 Write-Host ""
 Write-Host -Foreground Gray "If all of the above information is correct, press any key to continue. If you do not wish to continue, please press Cntrl-C:"
-$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
+
+
+    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 	# $Password = ConvertTo-SecureString $PlainPassword -AsPlainText -Force
 
@@ -433,7 +443,15 @@ $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 	Set-QADUser $Username -office $strOffice -department $strDepartment -StreetAddress $StrAddress -city $strCity -StateOrProvince $strState -PostalCode $strPostalCode -description $strTitle -Company $cfgCompany -title $strTitle -PhoneNumber $strTel | out-null
 	Set-QADUser $Username -objectattributes @{ipPhone=$Extension} | out-null
 	Set-QADUser $Username -objectattributes @{c=$strCountry} | out-null
+
+
+    #Adding to AD groups
     Write-host ""
+
+    if($strDepartment -eq "Engineering")
+        {
+            Add-ADGroupMember -Identity "debesys-int-users" -Member $Username
+        }
 
 	If($Distros -eq "") {
         Write-host "The manager did not provide a user to mirror groups off of, you will have to add them to the appropriate security groups manually."
@@ -455,12 +473,11 @@ $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
         
 	        }
         }
+
 	Get-QADUser $UserName -includedproperties ipphone | out-default | fl displayname, title, department, manager, ipphone, email 
 	
 	# Disconnect QADService.
 	disconnect-qadservice
-	
-import-module ActiveDirectory
 
 $NIS = Get-ADObject "CN=int,CN=ypservers,CN=ypServ30,CN=RpcServices,CN=System,DC=int,DC=tt,DC=local" -Properties:*
 $maxUid = $NIS.msSFU30MaxUidNumber + 1
