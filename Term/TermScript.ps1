@@ -320,9 +320,9 @@ Write-Host ""
 Write-Host -Foreground Red "IF THIS IS AN EMERGENCY TERM, REMOTE TO CCURE TO REMOVE THE USERS KEYCARD ACCESS FROM THE ADMINISTRATION CLIENT.  "
 Write-Host "  (Login is IT SUPPORT , Password is enable)"
 Write-Host ""
-Write-Host "   Make a note of the users 4-digit Card # from CCURE for the next step."
+Write-Host "   Make a note of the users Card # from CCURE for the next step."
 Write-Host ""
-$keycard=Read-Host "Please enter the 4 digit card number for the user (found on ccure) and press enter.  (If this is not an emergency term, just press enter.)"
+$keycard=Read-Host "Please enter the card number for the user (found on ccure) and press enter.  (If this is not an emergency term, just press enter.)"
 $number = $keycard.length
 
 
@@ -378,10 +378,6 @@ catch{}
 Disconnect-QADService
 
 
-
-
-
-
 Write-Host -Foreground Gray "--------------------------------------------------------------------------------"
 Write-Host -Foreground Cyan "You have successfully run the term script for"$DispName
 Write-Host -Foreground Cyan	""
@@ -405,13 +401,16 @@ Write-Host -Foreground Cyan	"	-Blackshield Token revoked"
 Write-Host -Foreground Cyan ""
 Write-Host -Foreground Cyan	"	-Google password changed for IT"
 Write-Host -Foreground Cyan ""
-Write-Host -Foreground Cyan	"	-disabled Webex account"
 Write-Host -Foreground Cyan ""
 Write-Host -Foreground Gray "--------------------------------------------------------------------------------"
 Write-Host -Foreground Red ""
 Write-Host -Foreground Red	"ITEMS THAT NEED TO BE COMPLETED"				
 Write-Host -Foreground Red ""
 Write-Host -Foreground Red	"	-Collect equipment and reallocated in SDE"	
+Write-Host -Foreground Red ""
+Write-Host -Foreground Red "    -Check employee accessories plan"
+Write-Host -Foreground Red ""
+Write-Host -Foreground Red "    -Check for arkadin/asentiel accounts"
 Write-Host -Foreground Red ""
 Write-Host -Foreground Red "   -Take Backupify Exports and save them to \\chijob01\g$\Terms"
 
