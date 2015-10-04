@@ -12,7 +12,7 @@ import-module ActiveDirectory
 #Begin Telnet session to create users extension
 #=============================================================================
 
-[System.Diagnostics.Process]::Start("C:\Program Files (x86)\Avaya\Site Administration\bin\ASA.exe") | out-null
+#[System.Diagnostics.Process]::Start("C:\Program Files (x86)\Avaya\Site Administration\bin\ASA.exe") | out-null
 
 Write-Host -ForegroundColor Green " _______                    ___ ___ .__                
  \      \   ______  _  __  /   |   \|__|______   ____  
@@ -21,7 +21,6 @@ Write-Host -ForegroundColor Green " _______                    ___ ___ .__
 \____|__  /\___  >\/\_/    \___|_  /|__||__|    \___  >
         \/     \/                \/                 \/ 
                                                        "                                                                                                          
-
 Write-Host ""
 Write-Host ""
 Write-Host ""	
@@ -29,26 +28,31 @@ Write-Host -Foreground Gray "Use your Avaya Site Administration Console to creat
 $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 #=============================================================================
-# Reads the user info from sheet3
+# Convert the New Hire Spreadsheet to a CSV
 #=============================================================================
+$xlCSV=6
+$CSVfilename1 = "$env:USERPROFILE + \newhire\newhire.xlsx"
+
+
 
 $Excel = New-Object -comobject Excel.Application  
 $Excel.Visible = $False 
 $Excel.displayalerts=$False
-$Excelfilename = $env:USERPROFILE + "\newhire\newhire.xlsx"
+$Excelfilename = "$env:USERPROFILE + \newhire\newhire.xlsx"
+
 
 $Workbook = $Excel.Workbooks.Open($Excelfilename)
 $Worksheet = $Workbook.Worksheets.item(3)
-$userSheet = $Worksheet.Cells.Item(2, 1).text
-$userSheet = $userSheet.split(',')
+$Worksheet.SaveAs($CSVfilename1,$xlCSV)
 $Excel.Quit()  
 
 If(ps excel){kill -name excel}
+(Get-Content "$env:USERPROFILE + \newhire\newhire.xlsx") | % {$_ -replace '"', ""} | out-file -FilePath C:\NewHire\user.csv -Force -Encoding ascii
 
 #=============================================================================
 # Opening user detail list"
 #=============================================================================
-
+$UserInformation = Import-Csv "$env:USERPROFILE + \newhire\newhire.xlsx"
 $cfgTab = [char]9
 $cfgCompany = "Trading Technologies";
 $cfgMailDomain = "@tradingtechnologies.com"; #E-Mail Domain
@@ -60,26 +64,24 @@ $cfgDC = "chiintdc01.int.tt.local";
 $cfgTCODC = "Trcdc03.tradeco.int.tt.local";
 $TCODomain = "TRADECO\";
 $TradeCoOU = "OU=Traders,OU=Tradeco,OU=USERS,OU=CHI,OU=US,DC=tradeco,DC=int,DC=tt,DC=local";
-
 #=============================================================================
-# Sloppy assign the variables to the array from the user csv worksheet
+# Do some logic about our environment.
 #=============================================================================
-
-    $FirstName = $userSheet[0]
-	$LastName = $userSheet[1]
-    $UserName = $userSheet[2]
-	$PersonalMail = $userSheet[3]
-    $strOffice = $userSheet[4];
-	$strTitle = $userSheet[5]; 
-    $strDepartment = $userSheet[6]
-    $Manager = $userSheet[7]
-    $Distros = $userSheet[8]
-	
+Foreach ($User in $UserInformation)
+{
+	$FirstName = $User.FirstName
+	$LastName = $User.LastName
+	$PersonalMail = $User.PersonalEmail
+	$UserName = $User.Username
 	$samAccountName = $FirstName + " " + $LastName
-	$PlainPassword = "default12"		
-	$DomainUserName = $domain + $username	
-	$Hdrive = "\\chifs01\home$\" + $Username	
-	$org = "Two-Factor Disabled Special cases"   
+	$PlainPassword = "default12"
+	$Manager = $User.Manager	
+	$DomainUserName = $domain + $username
+	$Distros = $User.Distros
+	$Hdrive = "\\chifs01\home$\" + $Username
+	$strDepartment = $User.Department
+	$org = "Two-Factor Disabled Special cases"
+	$pagerDutyUser = $User.PagerDuty
 	
 	If ($strDepartment -eq "Tradeco")
 	{$cfgDomain = $cfgTCODomain}
@@ -90,6 +92,7 @@ $TradeCoOU = "OU=Traders,OU=Tradeco,OU=USERS,OU=CHI,OU=US,DC=tradeco,DC=int,DC=t
 	$strMailAddress = $strMailAddress + $cfgMailDomain;
 	$strMailAlias = $samAccountName -replace " ", ".";
     $userPrincipalName = $strMailAddress
+}
 
 Add-PSSnapin Quest.ActiveRoles.ADManagement
 $Extension = Read-Host "Enter users Extension"
@@ -282,7 +285,9 @@ $cfgOffices = @{
   };
 
 
-	# Attributes
+	# Attributes.
+	$strOffice = $User.PhysicalDeliveryLocation;
+	$strTitle = $user.JobTitle; 
 	$strAddress = $cfgOffices.Get_Item( $strOffice ).Get_Item("Address");
 	$strCity = $cfgOffices.Get_Item( $strOffice ).Get_Item("City");
 	$strState = $cfgOffices.Get_Item( $strOffice ).Get_Item("State");
@@ -421,149 +426,32 @@ Write-Host -Foreground Gray "If all of the above information is correct, press a
 
     $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
-	# Set Quest Active Directory stuff to use a DC in the local site.
-	Connect-QADService -service $cfgDC | out-null
-
-	# Create Active Directory user Account
-	new-QADUser -ParentContainer $strOU -Name $SamAccountName -FirstName $FirstName -LastName $LastName -UserPrincipalName $userPrincipalName -DisplayName $DisplayName -SamAccountName $UserName -Email $strMailAddress -UserPassword $PlainPassword | out-null
-	disconnect-qadservice
-	Connect-QADService -service $cfgDC | out-null
-	
-	# Set attributes on AD DS account.
-	Get-QADUser $Username | out-null
-	start-sleep -s 2
-
-	Set-QADUser $Username -office $strOffice -department $strDepartment -StreetAddress $StrAddress -city $strCity -StateOrProvince $strState -PostalCode $strPostalCode -description $strTitle -Company $cfgCompany -title $strTitle -PhoneNumber $strTel | out-null
-	Set-QADUser $Username -objectattributes @{ipPhone=$Extension} | out-null
-	Set-QADUser $Username -objectattributes @{c=$strCountry} | out-null
 
 
-    #Adding to AD groups (special instances for departments below)
-    Write-host ""
-
-    if($strDepartment -eq "Engineering")
-        {
-            Add-ADGroupMember -Identity "debesys-int-users" -Member $Username
-        }
-
-	If($Distros -eq "") {
-        Write-host "The manager did not provide a user to mirror groups off of, you will have to add them to the appropriate security groups manually."
-    }
-	Else {
-	    $K = Get-QADUser $Distros | select memberof 
-	        foreach($user in $K.memberof) {
-		        try{
-                    # DO NOT COPY AWS PRIVS TO NEW USERS
-                    if ($user -like "*AWS*")  {
-                        Write-Host $user 
-                        Write-Host -ForegroundColor Red "This will not be mirrored. Check in with managers for AWS access."
-                        }
-                    Else{
-                        Add-QADGroupMember -Identity $user -Member $Username | out-null
-                        }
-                    }
-		        catch{}	
-        
-	        }
-        }
-
-	Get-QADUser $UserName -includedproperties ipphone | out-default | fl displayname, title, department, manager, ipphone, email 
+    
 	
 	# Disconnect QADService.
 	disconnect-qadservice
 
-#UNIX ATTRIBUTES
-$NIS = Get-ADObject "CN=int,CN=ypservers,CN=ypServ30,CN=RpcServices,CN=System,DC=int,DC=tt,DC=local" -Properties:*
-$maxUid = $NIS.msSFU30MaxUidNumber + 1
-Set-ADObject $NIS -Replace @{msSFU30MaxUidNumber = "$($maxUid)"}
-
-   Set-ADUser -Identity $Username -Replace @{mssfu30nisdomain = "int"} #Enable NIS
-   Set-ADUser -Identity $Username -Replace @{gidnumber="10000"} #Set Group ID
-   $maxUid++ #Raise the User ID number
-   Set-ADUser -Identity $Username -Replace @{uidnumber=$maxUid} #Set User ID
-   Set-ADUser -Identity $Username -Replace @{loginshell="/bin/bash"} #Set user login shell
-   Set-ADUser -Identity $Username -Replace @{msSFU30Name="$($Username)"}
-   Set-ADUser -Identity $Username -Replace @{unixHomeDirectory="/home/$($Username)"}
-   Write-Host -Backgroundcolor Green -Foregroundcolor Black $usr.SamAccountName changed #Write Changed Username to console	
-
-#This is where we will Launch the GAM tool to add the user to Google
-
-Write-Host -Foreground Green "The user's Google profile will now be created."
-Write-Host ""
-start-sleep -s 3
-Write-Host -Foreground Green "Googlfying "$DisplayName"..."
-Write-Host ""
-.\Gam.ps1 
-Write-Host ""
-Write-Host -Foreground Green "Adding "$DisplayName" to the Staff-"$StrOffice" Google Group..."
-c:\gam\gam.exe update group $StaffGroup add member $strMailAddress
-Write-Host "" 
-Write-Host -Foreground Green $DisplayName" can now use The Google."
-Write-Host ""
-c:\gam\gam.exe user $strMailAddress delegate to it-support@tradingtechnologies.com
-Write-Host -Foregroung Green " "$Displayname"'s mailbox is now a delegate of IT-Support."
-
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://172.17.24.35/") 
-
-try{$ie.Visible = $true}
-catch{}
-
-Write-Host ""
-Write-Host ""
-Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Gray "Use the IE window that was launched to create the users voicemail.  Their Extension is " $Extension ".  Once finished, close that window, and press any key in this window to continue."
-$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-
-$NewEmail = Read-Host "If you would like to send the new Hire email, type YES and press enter (if not, just press enter to skip this)."
-
-Write-Host ""
-
-if($NewEmail -eq 'YES')
-	{     
-		 Write-Host ""
-		 Write-Host "Sending Welcome Email to the new hire's personal email address."
-		 Write-Host ""
-		
-		 
-
-			$smtp = "mail.int.tt.local"
-
-			$to = $FirstName +" "+$LastName+ " <"+$PersonalMail+">"
-
-			$from = "IT-Support <it-support@tradingtechnologies.com>"
-
-			$subject = "Welcome to Trading Technologies!" 
-
-			$body = "<img src='http://www.marketswiki.com/wiki/images/e/ee/TT_horizontal_2lines_4c_logo225.jpg'> <br>"
 
 
-			$body += "Dear $to,<br>"
 
-			$body += "Welcome to Trading Technologies! The first step in your new hire process at TT is logging into your TT Gmail account for the first time.  To do this, go to <a href=http://mail.google.com>mail.google.com</a>. <br>"
+ 
+#This is where the script will check if the user needs PagerDuty access and will grant it if needed
 
-			$body += "<br>
-					Your email address is: <b>$strMailAddress</b> <br> 
-					Initial Password: <b>default12</b> (you will be prompted to create a new password) <br>"
-
-			$body += "<br>
-						We are sure you have many questions about your first day here so we have put together a <a href=https://sites.google.com/a/tradingtechnologies.com/new-hire-information>New Hire Information Site</a> in hopes of arming you with some information prior to your arrival.  You will be able to access this site once you login to your TT Gmail account. <br>"
-
-			$body += "<br>
-					   <b><font color=blue>Thank you,</b></font> <br>
-					   IT Service Desk <br>
-					   X1911 <br>
-					   (312) 268-1607 <br>"
-					   
-			#### Now send the email using \> Send-MailMessage 
-
-			send-MailMessage -SmtpServer $smtp -To $to -From $from -Subject $subject -Body $body -BodyAsHtml -Priority high
-}
-else
+if ($pagerDutyUser = 'TRUE')
 {
-Write-Host ""
-Write-Host "No email will be sent to the new hire."
-Write-Host ""
+	$PDbody = '{
+			"name": "$samAccountName",
+			"email": "$strMailAddress"
+		}'
+		
+	Invoke-RestMethod -Headers @{"Authorization"="Token token=v9E7rzAsDKxc1huTsjAz"} -Uri https://trading-technologies.pagerduty.com/api/v1/users -Method POST -ContentType "application/json" -Body $PDbody
 }
+
+write-output name $samAccountName
+write-output email $cfgTab$strMailAddress
+
+Write-output end script
+
 
