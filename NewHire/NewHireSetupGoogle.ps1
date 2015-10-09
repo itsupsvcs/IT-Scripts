@@ -15,7 +15,7 @@ import-module ActiveDirectory
 #Begin Telnet session to create users extension
 #=============================================================================
 
-[System.Diagnostics.Process]::Start("C:\Program Files (x86)\Avaya\Site Administration\bin\ASA.exe") | out-null
+#[System.Diagnostics.Process]::Start("C:\Program Files (x86)\Avaya\Site Administration\bin\ASA.exe") | out-null
 
 Write-Host -ForegroundColor Green " _______                    ___ ___ .__                
  \      \   ______  _  __  /   |   \|__|______   ____  
@@ -423,72 +423,11 @@ Write-Host ""
 Write-Host -Foreground Gray "If all of the above information is correct, press any key to continue. If you do not wish to continue, please press Cntrl-C:"
 
 
-    $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-
-	# Set Quest Active Directory stuff to use a DC in the local site.
-	Connect-QADService -service $cfgDC | out-null
-
-	# Create Active Directory user Account
-	new-QADUser -ParentContainer $strOU -Name $SamAccountName -FirstName $FirstName -LastName $LastName -UserPrincipalName $userPrincipalName -DisplayName $DisplayName -SamAccountName $UserName -Email $strMailAddress -UserPassword $PlainPassword | out-null
-	disconnect-qadservice
-	Connect-QADService -service $cfgDC | out-null
-	
-	# Set attributes on AD DS account.
-	Get-QADUser $Username | out-null
-	start-sleep -s 2
-
-	Set-QADUser $Username -office $strOffice -department $strDepartment -StreetAddress $StrAddress -city $strCity -StateOrProvince $strState -PostalCode $strPostalCode -description $strTitle -Company $cfgCompany -title $strTitle -PhoneNumber $strTel | out-null
-	Set-QADUser $Username -objectattributes @{ipPhone=$Extension} | out-null
-	Set-QADUser $Username -objectattributes @{c=$strCountry} | out-null
-
-
-    #Adding to AD groups (special instances for departments below)
-    Write-host ""
-
-    if($strDepartment -eq "Engineering")
-        {
-            Add-ADGroupMember -Identity "debesys-int-users" -Member $Username
-        }
-
-	If($Distros -eq "") {
-        Write-host "The manager did not provide a user to mirror groups off of, you will have to add them to the appropriate security groups manually."
-    }
-	Else {
-	    $K = Get-QADUser $Distros | select memberof 
-	        foreach($user in $K.memberof) {
-		        try{
-                    # DO NOT COPY AWS PRIVS TO NEW USERS
-                    if ($user -like "*AWS*")  {
-                        Write-Host $user 
-                        Write-Host -ForegroundColor Red "This will not be mirrored. Check in with managers for AWS access."
-                        }
-                    Else{
-                        Add-QADGroupMember -Identity $user -Member $Username | out-null
-                        }
-                    }
-		        catch{}	
-        
-	        }
-        }
-
-	Get-QADUser $UserName -includedproperties ipphone | out-default | fl displayname, title, department, manager, ipphone, email 
-	
+   
 	# Disconnect QADService.
 	disconnect-qadservice
 
-#UNIX ATTRIBUTES
-$NIS = Get-ADObject "CN=int,CN=ypservers,CN=ypServ30,CN=RpcServices,CN=System,DC=int,DC=tt,DC=local" -Properties:*
-$maxUid = $NIS.msSFU30MaxUidNumber + 1
-Set-ADObject $NIS -Replace @{msSFU30MaxUidNumber = "$($maxUid)"}
 
-   Set-ADUser -Identity $Username -Replace @{mssfu30nisdomain = "int"} #Enable NIS
-   Set-ADUser -Identity $Username -Replace @{gidnumber="10000"} #Set Group ID
-   $maxUid++ #Raise the User ID number
-   Set-ADUser -Identity $Username -Replace @{uidnumber=$maxUid} #Set User ID
-   Set-ADUser -Identity $Username -Replace @{loginshell="/bin/bash"} #Set user login shell
-   Set-ADUser -Identity $Username -Replace @{msSFU30Name="$($Username)"}
-   Set-ADUser -Identity $Username -Replace @{unixHomeDirectory="/home/$($Username)"}
-   Write-Host -Backgroundcolor Green -Foregroundcolor Black $usr.SamAccountName changed #Write Changed Username to console	
 
 #This is where the script will check if the user needs PagerDuty access and will grant it if needed
 
@@ -518,75 +457,3 @@ Write-Host -Foreground Green "Googlfying "$DisplayName"..."
 Write-Host ""
 createGoogleUser $FirstName $LastName $strOffice $strMailAddress
 Write-Host ""
-Write-Host -Foreground Green "Adding "$DisplayName" to the Staff-"$StrOffice" Google Group..."
-c:\gam\gam.exe update group $StaffGroup add member $strMailAddress
-Write-Host "" 
-Write-Host -Foreground Green $DisplayName" can now use The Google."
-Write-Host ""
-c:\gam\gam.exe user $strMailAddress delegate to it-support@tradingtechnologies.com
-Write-Host -Foregroung Green " "$Displayname"'s mailbox is now a delegate of IT-Support."
-
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://172.17.24.35/") 
-
-try{$ie.Visible = $true}
-catch{}
-
-Write-Host ""
-Write-Host ""
-Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Gray "Use the IE window that was launched to create the users voicemail.  Their Extension is " $Extension ".  Once finished, close that window, and press any key in this window to continue."
-$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
-
-$NewEmail = Read-Host "If you would like to send the new Hire email, type YES and press enter (if not, just press enter to skip this)."
-
-Write-Host ""
-
-if($NewEmail -eq 'YES')
-	{     
-		 Write-Host ""
-		 Write-Host "Sending Welcome Email to the new hire's personal email address."
-		 Write-Host ""
-		
-		 
-
-			$smtp = "mail.int.tt.local"
-
-			$to = $FirstName +" "+$LastName+ " <"+$PersonalMail+">"
-
-			$from = "IT-Support <it-support@tradingtechnologies.com>"
-
-			$subject = "Welcome to Trading Technologies!" 
-
-			$body = "<img src='http://www.marketswiki.com/wiki/images/e/ee/TT_horizontal_2lines_4c_logo225.jpg'> <br>"
-
-
-			$body += "Dear $to,<br>"
-
-			$body += "Welcome to Trading Technologies! The first step in your new hire process at TT is logging into your TT Gmail account for the first time.  To do this, go to <a href=http://mail.google.com>mail.google.com</a>. <br>"
-
-			$body += "<br>
-					Your email address is: <b>$strMailAddress</b> <br> 
-					Initial Password: <b>default12</b> (you will be prompted to create a new password) <br>"
-
-			$body += "<br>
-						We are sure you have many questions about your first day here so we have put together a <a href=https://sites.google.com/a/tradingtechnologies.com/new-hire-information>New Hire Information Site</a> in hopes of arming you with some information prior to your arrival.  You will be able to access this site once you login to your TT Gmail account. <br>"
-
-			$body += "<br>
-					   <b><font color=blue>Thank you,</b></font> <br>
-					   IT Service Desk <br>
-					   X1911 <br>
-					   (312) 268-1607 <br>"
-					   
-			#### Now send the email using \> Send-MailMessage 
-
-			send-MailMessage -SmtpServer $smtp -To $to -From $from -Subject $subject -Body $body -BodyAsHtml -Priority high
-}
-else
-{
-Write-Host ""
-Write-Host "No email will be sent to the new hire."
-Write-Host ""
-}
-

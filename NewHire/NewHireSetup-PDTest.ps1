@@ -28,31 +28,26 @@ Write-Host -Foreground Gray "Use your Avaya Site Administration Console to creat
 $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 #=============================================================================
-# Convert the New Hire Spreadsheet to a CSV
+# Reads the user info from sheet3
 #=============================================================================
-$xlCSV=6
-$CSVfilename1 = "$env:USERPROFILE + \newhire\newhire.xlsx"
-
-
 
 $Excel = New-Object -comobject Excel.Application  
 $Excel.Visible = $False 
 $Excel.displayalerts=$False
-$Excelfilename = "$env:USERPROFILE + \newhire\newhire.xlsx"
-
+$Excelfilename = $env:USERPROFILE + "\newhire\newhire.xlsx"
 
 $Workbook = $Excel.Workbooks.Open($Excelfilename)
 $Worksheet = $Workbook.Worksheets.item(3)
-$Worksheet.SaveAs($CSVfilename1,$xlCSV)
+$userSheet = $Worksheet.Cells.Item(2, 1).text
+$userSheet = $userSheet.split(',')
 $Excel.Quit()  
 
 If(ps excel){kill -name excel}
-(Get-Content "$env:USERPROFILE + \newhire\newhire.xlsx") | % {$_ -replace '"', ""} | out-file -FilePath C:\NewHire\user.csv -Force -Encoding ascii
 
 #=============================================================================
 # Opening user detail list"
 #=============================================================================
-$UserInformation = Import-Csv "$env:USERPROFILE + \newhire\newhire.xlsx"
+
 $cfgTab = [char]9
 $cfgCompany = "Trading Technologies";
 $cfgMailDomain = "@tradingtechnologies.com"; #E-Mail Domain
@@ -67,21 +62,23 @@ $TradeCoOU = "OU=Traders,OU=Tradeco,OU=USERS,OU=CHI,OU=US,DC=tradeco,DC=int,DC=t
 #=============================================================================
 # Do some logic about our environment.
 #=============================================================================
-Foreach ($User in $UserInformation)
-{
-	$FirstName = $User.FirstName
-	$LastName = $User.LastName
-	$PersonalMail = $User.PersonalEmail
-	$UserName = $User.Username
+
+	$FirstName = $userSheet[0]
+	$LastName = $userSheet[1]
+    $UserName = $userSheet[2]
+	$PersonalMail = $userSheet[3]
+    $strOffice = $userSheet[4];
+	$strTitle = $userSheet[5]; 
+    $strDepartment = $userSheet[6]
+    $Manager = $userSheet[7]
+    $Distros = $userSheet[8]
+	$pagerDutyUser = $userSheet[10]
+	
 	$samAccountName = $FirstName + " " + $LastName
 	$PlainPassword = "default12"
-	$Manager = $User.Manager	
 	$DomainUserName = $domain + $username
-	$Distros = $User.Distros
 	$Hdrive = "\\chifs01\home$\" + $Username
-	$strDepartment = $User.Department
 	$org = "Two-Factor Disabled Special cases"
-	$pagerDutyUser = $User.PagerDuty
 	
 	If ($strDepartment -eq "Tradeco")
 	{$cfgDomain = $cfgTCODomain}
@@ -92,7 +89,6 @@ Foreach ($User in $UserInformation)
 	$strMailAddress = $strMailAddress + $cfgMailDomain;
 	$strMailAlias = $samAccountName -replace " ", ".";
     $userPrincipalName = $strMailAddress
-}
 
 Add-PSSnapin Quest.ActiveRoles.ADManagement
 $Extension = Read-Host "Enter users Extension"
@@ -286,8 +282,6 @@ $cfgOffices = @{
 
 
 	# Attributes.
-	$strOffice = $User.PhysicalDeliveryLocation;
-	$strTitle = $user.JobTitle; 
 	$strAddress = $cfgOffices.Get_Item( $strOffice ).Get_Item("Address");
 	$strCity = $cfgOffices.Get_Item( $strOffice ).Get_Item("City");
 	$strState = $cfgOffices.Get_Item( $strOffice ).Get_Item("State");
@@ -439,19 +433,21 @@ Write-Host -Foreground Gray "If all of the above information is correct, press a
  
 #This is where the script will check if the user needs PagerDuty access and will grant it if needed
 
-if ($pagerDutyUser = 'TRUE')
+if ($pagerDutyUser -eq "TRUE")
 {
-	$PDbody = '{
-			"name": "$samAccountName",
-			"email": "$strMailAddress"
-		}'
-		
-	Invoke-RestMethod -Headers @{"Authorization"="Token token=v9E7rzAsDKxc1huTsjAz"} -Uri https://trading-technologies.pagerduty.com/api/v1/users -Method POST -ContentType "application/json" -Body $PDbody
+$PDbody1 = @"
+	{ "name"
+"@
+$PDbody2 = @"
+	"$samAccountName", "email"
+"@
+$PDbody3 = @"
+	"$strMailAddress" }
+"@
+	$PDbodyFull = "$PDbody1 : $PDbody2 : $PDbody3"
+	
+	$pagerDutyAdd = Invoke-RestMethod -Headers @{"Authorization"="Token token=v9E7rzAsDKxc1huTsjAz"} -Uri https://trading-technologies.pagerduty.com/api/v1/users -Method POST -ContentType "application/json" -Body $PDbodyFull
+	
+	if ($pagerDutyAdd) {Write-Host -ForegroundColor Green "PagerDuty account created for $samAccountName."}
 }
-
-write-output name $samAccountName
-write-output email $cfgTab$strMailAddress
-
-Write-output end script
-
 

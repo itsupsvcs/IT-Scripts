@@ -1,19 +1,11 @@
-$UserInformation = Import-Csv C:\Newhire\user.csv
-Foreach ($User in $UserInformation)
+#wrap GAM into fuction
+#rename this to something like createGoogleUser 
+#pass all arguments needed to create google user shown on the last line
+
+Function createGoogleUser ($FirstName, $LastName, $strOffice, $UserEmail)
 {
-	$FirstName = $User.FirstName
-	$LastName = $User.LastName
-	$UserName = $User.Username
 	$Password = "default12"
-	$Manager = $User.Manager	
-	$DomainUserName = $domain + $username
-	$Distros = $User.Distros
-	$Hdrive = "\\chifs01\home$\" + $Username
-	$strDepartment = $User.Department
 	$org = "Two-Factor Disabled Special cases"
-    $UserEmail = $FirstName + "." + $LastName + "@tradingtechnologies.com"
-	$strOffice = $User.PhysicalDeliveryLocation
-}
 
 If ($strOffice -eq "Chicago")
 	{
@@ -65,3 +57,5 @@ $LastNameLoc = $LastName +" "+ $Loc
 
 	
 c:\gam\gam.exe create user $UserEmail firstname $FirstName lastname $LastNameLoc password $Password changepassword on org $org 
+
+}
