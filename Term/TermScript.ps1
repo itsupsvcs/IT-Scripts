@@ -1,6 +1,6 @@
 #include all scripts
 . ".\RemoveGoogGroups.ps1"
-. ".\sendMail.ps1"
+. "C:\IT-Scripts\Helpers\sendMail.ps1"
 
 if($args.length -ne 1)
 {

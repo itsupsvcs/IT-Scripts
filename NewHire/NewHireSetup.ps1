@@ -1,6 +1,7 @@
 import-module ActiveDirectory
 #include all scripts
 . "C:\IT-Scripts\NewHire\createGoogleUser.ps1"
+. "C:\IT-Scripts\Helpers\sendMail.ps1"
 
 #
 # Create user accounts in AD and Google
@@ -262,7 +263,7 @@ $cfgSaoPaulo = @{
   "AreaCode" = "551134437212";
   "OU" = "OU=USERS,OU=SAO,OU=South America,DC=int,DC=tt,DC=local";
   "DispNamLoc" = "(TT-SAO)";
-  "ExtRange" = 1000..1199;
+  "ExtRange" = 3700..3729;
   "StaffGroup" = "staff-saopaulo@tradingtechnologies.com";
   }
   
@@ -539,6 +540,10 @@ Write-Host ""
 Write-Host ""	
 Write-Host -Foreground Gray "Use the IE window that was launched to create the users voicemail.  Their Extension is " $Extension ".  Once finished, close that window, and press any key in this window to continue."
 $x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
+
+#Emailing HR (Becca) to inform them of the user's extension.
+
+sendMail -recipient "Becca.Garber@TradingTechnologies.com" -subject "Office Phone Number for $Displayname" -body "Please add $strTel as an phone number for $Displayname under the Phone - Primary Work field in Workday."
 
 $NewEmail = Read-Host "If you would like to send the new Hire email, type YES and press enter (if not, just press enter to skip this)."
 
