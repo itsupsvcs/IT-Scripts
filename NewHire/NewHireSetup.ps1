@@ -1,6 +1,6 @@
 import-module ActiveDirectory
 #include all scripts
-. ".\createGoogleUser.ps1"
+. "C:\IT-Scripts\NewHire\createGoogleUser.ps1"
 
 #
 # Create user accounts in AD and Google
@@ -488,6 +488,7 @@ Set-ADObject $NIS -Replace @{msSFU30MaxUidNumber = "$($maxUid)"}
    Set-ADUser -Identity $Username -Replace @{loginshell="/bin/bash"} #Set user login shell
    Set-ADUser -Identity $Username -Replace @{msSFU30Name="$($Username)"}
    Set-ADUser -Identity $Username -Replace @{unixHomeDirectory="/home/$($Username)"}
+   Set-ADUser -Identity $Username -Replace @{extensionAttribute1="$($Username)@tradingtechnologies.com"} #Set Concur username
    Write-Host -Backgroundcolor Green -Foregroundcolor Black $usr.SamAccountName changed #Write Changed Username to console	
 
 #This is where the script will check if the user needs PagerDuty access and will grant it if needed
