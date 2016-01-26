@@ -266,7 +266,19 @@ $cfgSaoPaulo = @{
   "ExtRange" = 3700..3729;
   "StaffGroup" = "staff-saopaulo@tradingtechnologies.com";
   }
-  
+
+$cfgPune = @{
+  "Address" = "Platinum Tower, Level 8"+ $nl +"No. 1 Naylor Road";
+  "City" = "Pune"
+  "State" = "India"
+  "PostalCode" = "411001"
+  "Country" = "IN";
+  "AreaCode" = "20";
+  "OU" = "OU=USERS,OU=IND,OU=Asia-Pacific,DC=int,DC=tt,DC=local";
+  "DispNamLoc" = "(TT-IND)";
+  "ExtRange" = 1000;
+  "StaffGroup" = "staff-pune@tradingtechnologies.com";
+  }  
  
 #=============================================================================
 # Creates an array of the above hash tables.
@@ -283,6 +295,7 @@ $cfgOffices = @{
   "Singapore" = $cfgSingapore;
   "Sydney" = $cfgSydney;
   "Sao Paulo" = $cfgSaoPaulo;
+  "Pune" = $cfgPune;
   
   };
 

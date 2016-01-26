@@ -18,9 +18,9 @@
      #Sending email 
      $smtp.Send($msg)
 
-     Write-Host "Recipient value = $recipient"
-     Write-Host "Subject value = $subject"
-     Write-Host "Body value = $body"
+     #Write-Host "Recipient value = $recipient"
+     #Write-Host "Subject value = $subject"
+     #Write-Host "Body value = $body"
 }	
 
 #If you want to test send email replace the recipient below and uncomment the line
