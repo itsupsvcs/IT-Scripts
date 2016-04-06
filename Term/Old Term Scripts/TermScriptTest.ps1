@@ -1,14 +1,14 @@
 #include all scripts
 . ".\RemoveGoogGroups.ps1"
-. "C:\IT-Scripts\Helpers\sendMail.ps1"
-write-Host -Foreground Gray "Loading AD Modules..."
+. ".\sendMail.ps1"
 
-#Commented out so you could just type in the username in the script
-#if($args.length -ne 1)
-#{
-#	write-host "usage:  TermScript.ps1 <username>"
-#	exit
-#}
+if($args.length -ne 1)
+{
+	write-host "usage:  TermScript.ps1 <username>"
+	exit
+}
+
+$name = $args[0]
 
 Add-PSSnapin Quest.ActiveRoles.ADManagement | out-null
 
@@ -28,9 +28,7 @@ Write-Host -ForegroundColor Green "___________                                  
 Write-Host -Foreground Gray "------------------------------------------------------------------------------------------------------------------------"
 Write-Host -Foreground Cyan "Termed Employee Information"
 Write-Host -Foreground Gray "------------------------------------------------------------------------------------------------------------------------"
-Write-Host -Foreground Black " "
 
-$name = Read-Host "Enter the INTAD of the user you are running this script on in all lowercase"
 connect-qadservice | out-null
 $user = Get-QADUser $name
 
@@ -72,6 +70,8 @@ Write-Host -Foreground Gray "---------------------------------------------------
 Write-Host ""
 Write-Host ""
 
+
+
 $DispName = ""
 $Location = ""
 $suffix = ""
@@ -87,9 +87,12 @@ catch{}
 $location = $location[1]
 $Gmail = $user.Email
 
-Write-Host -Foreground Yellow "Are you sure you want to start the term for"$DispName"?"
-Read-Host 'If yes, press enter. If you do not wish to continue, please press Cntrl-C:' | Out-Null
+
+Write-Host -Foreground Gray "Are you sure you want to start the term for"$DispName"? If yes, press any key to continue. If you do not wish to continue, please press Cntrl-C:"
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 Write-Host ""
+Write-Host ""
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 Remove-QADMemberOf $name -RemoveAll | out-null
 
@@ -110,12 +113,12 @@ $username = $user.Name
 
 sendMail -recipient "Joseph.Grankowski@TradingTechnologies.com" -subject "Disable MSDN Account For $DispName" -body "Please check MSDN to see if $DispName has an account, and if so disable it.  This person is no longer employed at Trading Technologies."
 
-sendMail -recipient "IT-EnterpriseDevelopment@tradingtechnologies.com" -subject "Remove CMS Access For $DispName" -body "Please check AWS to see if $DispName has an account, and if so disable it.  This person is no longer employed at Trading Technologies."	 
+sendMail -recipient "IT-EnterpriseDevelopment@tradingtechnologies.com" -subject "Remove CMS Access For $DispName" -body "Please check MSDN to see if $DispName has an account, and if so disable it.  This person is no longer employed at Trading Technologies."	 
 
 sendMail -recipient "it-enterpriselabservices@tradingtechnologies.com" -subject "Remove AWS Access for $DispName" -body "Please check AWS for $Dispname and remove any accounts and keys if applicable. This person is no longer employed at Trading Technologies."
 
 $ukArray = 'UK', 'FRA', 'GEN', 'FF'
-$apArray = 'SIN', 'TO', 'HK', 'AU', 'IN'
+$apArray = 'SIN', 'TO', 'HK', 'AU'
 
 
 if ($ukArray -contains $location)
@@ -127,8 +130,8 @@ if ($ukArray -contains $location)
 	Write-Host ""
 	Write-Host ""
 	Write-Host ""
-	Write-Host -Foreground Gray "Use the IE window that was launched to disconnect the user's VPN session."
-	Read-Host 'Press Enter to continue...' | Out-Null
+	Write-Host -Foreground Gray "Use the IE window that was launched to disconnect the user's VPN session.  When finished, press any key in this window to continue."
+	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 }
 elseif ($apArray -contains $location)
 {
@@ -139,8 +142,8 @@ elseif ($apArray -contains $location)
 	Write-Host ""
 	Write-Host ""
 	Write-Host ""
-	Write-Host -Foreground Gray "Use the IE window that was launched to disconnect the user's VPN session."
-	Read-Host 'Press Enter to continue...' | Out-Null
+	Write-Host -Foreground Gray "Use the IE window that was launched to disconnect the user's VPN session.  When finished, press any key in this window to continue."
+	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 }
 else
 {
@@ -151,8 +154,8 @@ else
 	Write-Host ""
 	Write-Host ""
 	Write-Host ""
-	Write-Host -Foreground Gray "Use the IE window that was launched to remove end the user's VPN session (If Applicable)."
-	Read-Host 'Press Enter to continue...' | Out-Null
+	Write-Host -Foreground Gray "Use the IE window that was launched to remove end the user's VPN session (If Applicable).  When finished, press any key in this window to continue."
+	$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 }
 
 #Move users to term group and change password
@@ -207,15 +210,17 @@ $ie.Navigate("172.17.24.35")
 $ie.Visible = $true
 Write-Host ""
 Write-Host ""	
-Write-Host -Foreground Gray "Use the IE window that was launched to check and remove the users voicemail."
-Read-Host 'Press Enter to continue...' | Out-Null
+Write-Host -Foreground Gray "Use the IE window that was launched to check and remove the users voicemail.  Once finished, close that window, and press any key in this window to continue."
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 [System.Diagnostics.Process]::Start("C:\Program Files (x86)\Avaya\Site Administration\bin\ASA.exe") | out-null
+
+
 <# Extension #>
 Write-Host ""
 Write-Host ""	
-Write-Host -Foreground Gray "Use your Avaya Site Administration Console to delete the user's extension."
-Read-Host 'Press Enter to continue...' | Out-Null
+Write-Host -Foreground Gray "Use your Avaya Site Administration Console to delete the user's extension.  Once finished, close that program, and press any key in this window to continue."
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 <# Kill Wifi #>
 $ie = New-Object -ComObject InternetExplorer.Application
@@ -223,9 +228,9 @@ $ie.Navigate("http://meraki.cisco.com/")
 $ie.Visible = $true
 
 Write-Host ""
-Write-Host ""
-Write-Host -Foreground Gray "Use the IE window that was launched to kill any active wifi sessions for this user in Meraki."
-Read-Host 'Press Enter to continue...' | Out-Null
+Write-Host ""	
+Write-Host -Foreground Gray "Use the IE window that was launched to kill any active wifi sessions for this user in Meraki.  Once finished, close that window, and press any key in this window to continue."
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 <# SoHo Firewall #>
 $ie = New-Object -ComObject InternetExplorer.Application
@@ -233,26 +238,18 @@ $ie.Navigate("https://172.17.23.10")
 $ie.Visible = $true
 Write-Host ""
 Write-Host ""
-Write-Host -Foreground Gray "Use the IE window that was launched to remove the employee's user object from the Soho Firewall (If Applicable)."
-Read-Host 'Press Enter to continue...' | Out-Null
+Write-Host -Foreground Gray "Use the IE window that was launched to remove the employee's user object from the Soho Firewall (If Applicable).  When finished, press any key in this window to continue."
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 <# JIRA #>
 $ie = New-Object -ComObject InternetExplorer.Application
 $ie.Navigate("https://tradingtech.atlassian.net")
 $ie.Visible = $true
-Write-Host ""
-Write-Host ""
-Write-Host -Foreground Gray "Use the IE window that was launched to disable the user in JIRA (if applicable). (username: it-support, pword: on SS)."
-Read-Host 'Press Enter to continue...' | Out-Null
 
-<# JetBrains #>
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://account.jetbrains.com/login")
-$ie.Visible = $true
 Write-Host ""
 Write-Host ""
-Write-Host -Foreground Gray "Use the IE window that was launched to revoke the user's JetBrains software licenses (Use IT-Support account from SS)."
-Read-Host 'Press Enter to continue...' | Out-Null
+Write-Host -Foreground Gray "Use the IE window that was launched to disable the user in JIRA (if applicable). (username: it-support, pword: on SS).  When finished, press any key in this window to continue."
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 <# Google Apps #>
 $ie = New-Object -ComObject InternetExplorer.Application
@@ -272,34 +269,9 @@ Write-Host ""
 Write-Host -Foreground Gray "   -Block, then delete, any devices assigned"
 Write-Host ""
 Write-Host -Foreground Gray "   -Transfer ownership of their documents."
-Read-Host 'Press Enter to continue...' | Out-Null
-
-<# Arkadin #>
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://docs.google.com/spreadsheets/d/1nhhIsR3ORu5OMLZvo-fxKPR4MPX6PUHVvlIlYELUUk0/edit?ts=568ec058#gid=123429426")
-$ie.Visible = $true	
 Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Gray "Check the Arakin user spreadsheet so see if the employee has an account, update accordingly."
-Read-Host 'Press Enter to continue...' | Out-Null
-
-<# Webex #>
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://tradingtechnologies.webex.com/adm0401lsp13/default.do?&needFilter=false&siteurl=tradingtechnologies&afterLoginPage=0&rnd=0.5608918472052085")
-$ie.Visible = $true	
-Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Gray "Check the Webex Portal to see if the employee has an account (Creds are in SS), if they do you will need to contact our Webex/Arkadin rep to have the account removed."
-Read-Host 'Press Enter to continue...' | Out-Null
-
-<# Wordpress #>
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://www.tradingtechnologies.com/wp-login.php?redirect_to=https%3A%2F%2Fwww.tradingtechnologies.com%2Fwp-admin%2F&reauth=1")
-$ie.Visible = $true	
-Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Grey "Use the IT-Support Google login to access www.tradingtechnologies.com/wp-admin to remove the user if applicable.  Reach out to their manager to see who to transfer document ownership."
-Read-Host 'Press Enter to continue...' | Out-Null
+Write-Host -Foreground Gray "When finished, press any key in this window to continue."
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 <# Join.Me #>
 $ie = new-object -com "InternetExplorer.Application"
@@ -320,7 +292,9 @@ Write-Host ""
 Write-Host -Foreground Gray "Use the IE window that was launched to do the Following:"
 Write-Host ""
 Write-Host -Foreground Gray "-Delete the User's Join.Me account."
-Read-Host 'Press Enter to continue...' | Out-Null
+Write-Host ""
+Write-Host -Foreground Gray "When finished, press any key in this window to continue."
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
 
 <# Legal #>
 Write-Host ""
@@ -336,7 +310,6 @@ if($Legal -eq 'YES')
   $ie = New-Object -ComObject InternetExplorer.Application
   $ie.Navigate("https://tt.anaqua.com/anaqua")
   $ie.Visible = $true
-  Read-Host 'Press Enter to continue...' | Out-Null
   }
   
 
@@ -428,25 +401,17 @@ Write-Host -Foreground Cyan	"	-Blackshield Token revoked"
 Write-Host -Foreground Cyan ""
 Write-Host -Foreground Cyan	"	-Google password changed for IT"
 Write-Host -Foreground Cyan ""
-Write-Host -Foreground Cyan "   -Arkadin accounts updated accordingly"
-Write-Host -Foreground Cyan ""
-Write-Host -Foreground Cyan "   -Webex accounts has been checked. Contact Webex/Arkadin Rep if needed"
 Write-Host -Foreground Cyan ""
 Write-Host -Foreground Gray "--------------------------------------------------------------------------------"
 Write-Host -Foreground Red ""
-Write-Host -Foreground Green	"ITEMS THAT NEED TO BE COMPLETED"				
+Write-Host -Foreground Red	"ITEMS THAT NEED TO BE COMPLETED"				
 Write-Host -Foreground Red ""
-Write-Host -Foreground Red "	-Collect equipment and reallocated in Service Now"	
+Write-Host -Foreground Red	"	-Collect equipment and reallocated in SDE"	
 Write-Host -Foreground Red ""
-Write-Host -Foreground Red "    -Retire employee accessories plan"
+Write-Host -Foreground Red "    -Check employee accessories plan"
 Write-Host -Foreground Red ""
-Write-Host -Foreground Red "    -Take Backupify Exports and save them to \\chijob01\g$\Terms"
+Write-Host -Foreground Red "    -Check for arkadin/asentiel accounts"
 Write-Host -Foreground Red ""
-write-host -Foreground Red "    -LucidChart License will be removed and documents will be transferred "
-write-host -Foreground Red "     to IT automatically once their Google Account has been deleted after "
-write-host -Foreground Red "     two weeks of term "
-write-host -Foreground Red ""
+Write-Host -Foreground Red "   -Take Backupify Exports and save them to \\chijob01\g$\Terms"
 
 Get-QADUser $name | out-default | fl name, phone, email, DN
-
-Read-Host 'Press Enter to exit!' | Out-Null

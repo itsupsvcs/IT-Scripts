@@ -1,5 +1,5 @@
 import-module ActiveDirectory
-$Username = "praiyani"
+$Username = "aplaczek"
 
 #UNIX ATTRIBUTES
 $NIS = Get-ADObject "CN=int,CN=ypservers,CN=ypServ30,CN=RpcServices,CN=System,DC=int,DC=tt,DC=local" -Properties:*

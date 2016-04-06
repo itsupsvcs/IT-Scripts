@@ -245,15 +245,6 @@ Write-Host ""
 Write-Host -Foreground Gray "Use the IE window that was launched to disable the user in JIRA (if applicable). (username: it-support, pword: on SS)."
 Read-Host 'Press Enter to continue...' | Out-Null
 
-<# JetBrains #>
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://account.jetbrains.com/login")
-$ie.Visible = $true
-Write-Host ""
-Write-Host ""
-Write-Host -Foreground Gray "Use the IE window that was launched to revoke the user's JetBrains software licenses (Use IT-Support account from SS)."
-Read-Host 'Press Enter to continue...' | Out-Null
-
 <# Google Apps #>
 $ie = New-Object -ComObject InternetExplorer.Application
 $ie.Navigate("https://admin.google.com/tradingtechnologies.com/AdminHome")
@@ -281,15 +272,6 @@ $ie.Visible = $true
 Write-Host ""
 Write-Host ""	
 Write-Host -Foreground Gray "Check the Arakin user spreadsheet so see if the employee has an account, update accordingly."
-Read-Host 'Press Enter to continue...' | Out-Null
-
-<# Webex #>
-$ie = New-Object -ComObject InternetExplorer.Application
-$ie.Navigate("https://tradingtechnologies.webex.com/adm0401lsp13/default.do?&needFilter=false&siteurl=tradingtechnologies&afterLoginPage=0&rnd=0.5608918472052085")
-$ie.Visible = $true	
-Write-Host ""
-Write-Host ""	
-Write-Host -Foreground Gray "Check the Webex Portal to see if the employee has an account (Creds are in SS), if they do you will need to contact our Webex/Arkadin rep to have the account removed."
 Read-Host 'Press Enter to continue...' | Out-Null
 
 <# Wordpress #>
@@ -430,7 +412,6 @@ Write-Host -Foreground Cyan	"	-Google password changed for IT"
 Write-Host -Foreground Cyan ""
 Write-Host -Foreground Cyan "   -Arkadin accounts updated accordingly"
 Write-Host -Foreground Cyan ""
-Write-Host -Foreground Cyan "   -Webex accounts has been checked. Contact Webex/Arkadin Rep if needed"
 Write-Host -Foreground Cyan ""
 Write-Host -Foreground Gray "--------------------------------------------------------------------------------"
 Write-Host -Foreground Red ""
@@ -442,10 +423,6 @@ Write-Host -Foreground Red "    -Retire employee accessories plan"
 Write-Host -Foreground Red ""
 Write-Host -Foreground Red "    -Take Backupify Exports and save them to \\chijob01\g$\Terms"
 Write-Host -Foreground Red ""
-write-host -Foreground Red "    -LucidChart License will be removed and documents will be transferred "
-write-host -Foreground Red "     to IT automatically once their Google Account has been deleted after "
-write-host -Foreground Red "     two weeks of term "
-write-host -Foreground Red ""
 
 Get-QADUser $name | out-default | fl name, phone, email, DN
 

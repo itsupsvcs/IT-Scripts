@@ -608,4 +608,4 @@ Write-Host ""
 Write-Host "No email will be sent to the new hire."
 Write-Host ""
 }
-
+$x = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyUp")
